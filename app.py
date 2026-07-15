@@ -343,7 +343,7 @@ elif page == "📊 Leaderboard":
         results = []
         for friend in tournament.get("friends", []):
             fp = picks.get(friend, [])
-            scored = [(n, int(scores.get(n, 0))) for n in fp if scores.get(n, 0) > 0]
+            scored = [(n, int(scores.get(n, PAR))) for n in fp]
             scored.sort(key=lambda x: x[1])
             if len(scored) >= 2:
                 best = scored[:2]
