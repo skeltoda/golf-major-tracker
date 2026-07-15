@@ -238,8 +238,8 @@ elif page == "⛳ Field & Points":
         st.success(f"✅ {len(field)} players loaded")
         df = pd.DataFrame(field).sort_values("points", ascending=False).reset_index(drop=True)
         df.index += 1
-        pts_counts = df["points"].value_counts().sort_index(ascending=False)
-        cols = st.columns(min(len(pts_counts), 8))
+        pts_counts = df["points"].value_counts().sort_index(ascending=False).head(8)
+        cols = st.columns(len(pts_counts))
         for i, (pts, count) in enumerate(pts_counts.items()):
             cols[i].metric(f"{pts} pts", f"{count} players")
         st.divider()
