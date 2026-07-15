@@ -213,7 +213,7 @@ if tournament.get("tournament"):
     st.sidebar.markdown(f"**{tournament['tournament']}**")
     st.sidebar.markdown(f"{len(tournament.get('friends', []))} players · 16pt budget")
 
-page = st.sidebar.radio("Navigate", ["🏆 Setup", "⛳ Field & Points", "👥 Friend Picks", "📊 Leaderboard"])
+page = st.sidebar.radio("Navigate", ["🏆 Setup", "⛳ Field & Points", "👥 Friend Picks", "📊 Leaderboard", "🏌️ Live Leaderboard"])
 
 if page == "🏆 Setup":
     st.title("🏆 Tournament Setup")
@@ -367,3 +367,48 @@ elif page == "📊 Leaderboard":
             r["Pos"] = medals[i] if i < 3 else str(i + 1)
         df = pd.DataFrame(results)[["Pos", "Friend", "Best 2 golfers", "Score", "All picks"]]
         st.dataframe(df, use_container_width=True, hide_index=True)
+
+elif page == "🏌️ Live Leaderboard":
+    st.title("🏌️ The 154th Open — Live Leaderboard")
+    st.caption("Royal Birkdale · Par 70 · Auto-updates during the tournament")
+
+    if st.button("🔄 Refresh"):
+        st.rerun()
+
+    try:
+        url = "https://site.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga"
+        r = requests.get(url, timeout=5)
+        data = r.json()
+
+        leaderboard = []
+        found = False
+
+        for event in data.get("events", []):
+            ename = event.get("name", "").lower()
+            if "open" in ename or "birkdale" in ename:
+                found = True
+                for comp in event.get("competitions", []):
+                    for p in comp.get("competitors", []):
+                        name = p.get("athlete", {}).get("displayName", "")
+                        pos = p.get("status", {}).get("position", {}).get("displayName", "-")
+                        score = p.get("score", {}).get("displayValue", "-")
+                        today = p.get("linescores", [{}])[-1].get("displayValue", "-") if p.get("linescores") else "-"
+                        thru = p.get("status", {}).get("thru", {}).get("displayValue", "-")
+                        made_cut = p.get("status", {}).get("type", {}).get("id", "") != "5"
+                        if name:
+                            leaderboard.append({
+                                "Pos": pos,
+                                "Player": name,
+                                "Score": score,
+                                "Today": today,
+                                "Thru": thru,
+                            })
+
+        if leaderboard:
+            df = pd.DataFrame(leaderboard)
+            st.dataframe(df, use_container_width=True, hide_index=True)
+        else:
+            st.info("⏳ Tournament leaderboard not available yet — check back Thursday 17 July when play begins.")
+
+    except Exception as e:
+        st.info("⏳ Tournament not yet started — leaderboard will appear here once play begins on Thursday 17 July.")
