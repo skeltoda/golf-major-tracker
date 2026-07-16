@@ -229,7 +229,7 @@ if tournament.get("tournament"):
     st.sidebar.markdown(f"**{tournament['tournament']}**")
     st.sidebar.markdown(f"{len(tournament.get('friends', []))} players · 16pt budget")
 
-page = st.sidebar.radio("Navigate", ["🏆 Setup", "⛳ Field & Points", "👥 Friend Picks", "📝 Score Updates", "📊 Leaderboard"])
+page = st.sidebar.radio("Navigate", ["📊 Leaderboard", "📝 Score Updates", "🏆 Setup", "⛳ Field & Points", "👥 Friend Picks"])
 
 if page == "🏆 Setup":
     show_header()
@@ -403,9 +403,7 @@ elif page == "📊 Leaderboard":
     st.title("📊 Leaderboard")
     if not picks:
         st.warning("No picks entered yet.")
-    elif not st.session_state.get("scores_confirmed", False):
-        st.warning("⚠️ Please go to **📝 Score Updates** first and confirm scores before viewing the leaderboard.")
-        st.info("Click '📝 Score Updates' in the left sidebar")
+
     else:
         last_updated = load("last_updated.json", {})
         if last_updated.get("time"):
@@ -423,9 +421,33 @@ elif page == "📊 Leaderboard":
             st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = counting · ☆ = not counting · Last updated: {time_str}")
         else:
             st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = counting · ☆ = not counting")
-        if st.button("🔄 Refresh"):
-            st.session_state.scores_confirmed = False
-            st.rerun()
+        last_updated = load("last_updated.json", {})
+        if last_updated.get("time"):
+            from datetime import datetime
+            updated_time = datetime.strptime(last_updated["time"], "%Y-%m-%d %H:%M:%S")
+            diff = datetime.utcnow() - updated_time
+            mins = int(diff.total_seconds() // 60)
+            if mins < 1:
+                time_str = "just now"
+            elif mins < 60:
+                time_str = f"{mins} minutes ago"
+            else:
+                hours = mins // 60
+                time_str = f"{hours}h {mins % 60}m ago"
+            st.markdown(f"""
+            <div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:12px 16px;margin-bottom:16px">
+                <p style="margin:0;font-size:14px;font-weight:700;color:#92400E">⏱️ Scores last updated: {time_str}</p>
+                <p style="margin:4px 0 0;font-size:13px;color:#92400E">To refresh the leaderboard with latest scores, go to 
+                <a href="?page=scores" style="color:#B45309;font-weight:600">📝 Score Updates</a> in the left sidebar and confirm the latest scores.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:12px 16px;margin-bottom:16px">
+                <p style="margin:0;font-size:14px;font-weight:700;color:#92400E">⏱️ Scores not yet updated</p>
+                <p style="margin:4px 0 0;font-size:13px;color:#92400E">To update the leaderboard, go to <b>📝 Score Updates</b> in the left sidebar and enter the latest scores.</p>
+            </div>
+            """, unsafe_allow_html=True)
         medals = ["🥇","🥈","🥉"]
         results = []
         for friend in tournament.get("friends", []):
