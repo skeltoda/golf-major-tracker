@@ -1,0 +1,606 @@
+[
+  {
+    "name": "Scottie Scheffler",
+    "points": 10
+  },
+  {
+    "name": "Rory McIlroy",
+    "points": 10
+  },
+  {
+    "name": "Tommy Fleetwood",
+    "points": 8
+  },
+  {
+    "name": "Matt Fitzpatrick",
+    "points": 8
+  },
+  {
+    "name": "Jon Rahm",
+    "points": 7
+  },
+  {
+    "name": "Viktor Hovland",
+    "points": 7
+  },
+  {
+    "name": "Xander Schauffele",
+    "points": 7
+  },
+  {
+    "name": "Chris Gotterup",
+    "points": 7
+  },
+  {
+    "name": "Wyndham Clark",
+    "points": 6
+  },
+  {
+    "name": "Tyrrell Hatton",
+    "points": 6
+  },
+  {
+    "name": "Collin Morikawa",
+    "points": 6
+  },
+  {
+    "name": "Ludvig Aberg",
+    "points": 6
+  },
+  {
+    "name": "Min Woo Lee",
+    "points": 6
+  },
+  {
+    "name": "Robert MacIntyre",
+    "points": 6
+  },
+  {
+    "name": "Shane Lowry",
+    "points": 6
+  },
+  {
+    "name": "Brooks Koepka",
+    "points": 6
+  },
+  {
+    "name": "Cameron Smith",
+    "points": 5
+  },
+  {
+    "name": "Justin Rose",
+    "points": 5
+  },
+  {
+    "name": "Sam Burns",
+    "points": 5
+  },
+  {
+    "name": "Justin Thomas",
+    "points": 5
+  },
+  {
+    "name": "Patrick Cantlay",
+    "points": 5
+  },
+  {
+    "name": "Bryson DeChambeau",
+    "points": 5
+  },
+  {
+    "name": "Jason Day",
+    "points": 4
+  },
+  {
+    "name": "Aaron Rai",
+    "points": 4
+  },
+  {
+    "name": "Sahith Theegala",
+    "points": 4
+  },
+  {
+    "name": "Max Homa",
+    "points": 4
+  },
+  {
+    "name": "Tom Kim",
+    "points": 3
+  },
+  {
+    "name": "Sepp Straka",
+    "points": 3
+  },
+  {
+    "name": "Adam Scott",
+    "points": 3
+  },
+  {
+    "name": "Rasmus Hojgaard",
+    "points": 3
+  },
+  {
+    "name": "Nicolai Hojgaard",
+    "points": 3
+  },
+  {
+    "name": "Hideki Matsuyama",
+    "points": 3
+  },
+  {
+    "name": "Jordan Spieth",
+    "points": 2
+  },
+  {
+    "name": "Si Woo Kim",
+    "points": 2
+  },
+  {
+    "name": "Harris English",
+    "points": 2
+  },
+  {
+    "name": "Russell Henley",
+    "points": 2
+  },
+  {
+    "name": "Patrick Reed",
+    "points": 2
+  },
+  {
+    "name": "Akshay Bhatia",
+    "points": 2
+  },
+  {
+    "name": "Alex Noren",
+    "points": 2
+  },
+  {
+    "name": "Billy Horschel",
+    "points": 1
+  },
+  {
+    "name": "Daniel Berger",
+    "points": 1
+  },
+  {
+    "name": "Eugenio Chacarra",
+    "points": 1
+  },
+  {
+    "name": "Haotong Li",
+    "points": 1
+  },
+  {
+    "name": "Matt McCarty",
+    "points": 1
+  },
+  {
+    "name": "Max Greyserman",
+    "points": 1
+  },
+  {
+    "name": "Nico Echavarria",
+    "points": 1
+  },
+  {
+    "name": "Cameron Young",
+    "points": 1
+  },
+  {
+    "name": "JT Poston",
+    "points": 1
+  },
+  {
+    "name": "Laurie Canter",
+    "points": 1
+  },
+  {
+    "name": "David Puig",
+    "points": 1
+  },
+  {
+    "name": "Eric Cole",
+    "points": 1
+  },
+  {
+    "name": "Kazuma Kobori",
+    "points": 1
+  },
+  {
+    "name": "JJ Spaun",
+    "points": 1
+  },
+  {
+    "name": "Andrew Novak",
+    "points": 1
+  },
+  {
+    "name": "Tom McKibbin",
+    "points": 1
+  },
+  {
+    "name": "Ryo Hisatsune",
+    "points": 1
+  },
+  {
+    "name": "Bud Cauley",
+    "points": 1
+  },
+  {
+    "name": "Harry Hall",
+    "points": 1
+  },
+  {
+    "name": "Kristoffer Reitan",
+    "points": 1
+  },
+  {
+    "name": "Joakim Lagergren",
+    "points": 1
+  },
+  {
+    "name": "Naoyuki Kataoka",
+    "points": 1
+  },
+  {
+    "name": "Adrien Saddier",
+    "points": 1
+  },
+  {
+    "name": "Jacob Bridgeman",
+    "points": 1
+  },
+  {
+    "name": "Kota Kaneko",
+    "points": 1
+  },
+  {
+    "name": "Casey Jarvis",
+    "points": 1
+  },
+  {
+    "name": "Jiho Yang",
+    "points": 1
+  },
+  {
+    "name": "Alistair Docherty",
+    "points": 1
+  },
+  {
+    "name": "Caleb Surratt",
+    "points": 1
+  },
+  {
+    "name": "Stuart Grehan",
+    "points": 1
+  },
+  {
+    "name": "Pierceson Coody",
+    "points": 1
+  },
+  {
+    "name": "Sam Stevens",
+    "points": 1
+  },
+  {
+    "name": "Peter Uihlein",
+    "points": 1
+  },
+  {
+    "name": "Tom Sloman",
+    "points": 1
+  },
+  {
+    "name": "Michael Thorbjornsen",
+    "points": 1
+  },
+  {
+    "name": "Ben Griffin",
+    "points": 1
+  },
+  {
+    "name": "Daniel Hillier",
+    "points": 1
+  },
+  {
+    "name": "Jeongwoo Ham",
+    "points": 1
+  },
+  {
+    "name": "Mason Howell",
+    "points": 1
+  },
+  {
+    "name": "Cameron John",
+    "points": 1
+  },
+  {
+    "name": "Kazuki Higa",
+    "points": 1
+  },
+  {
+    "name": "Joe Dean",
+    "points": 1
+  },
+  {
+    "name": "Dan Bradbury",
+    "points": 1
+  },
+  {
+    "name": "Daniel Brown",
+    "points": 1
+  },
+  {
+    "name": "Angel Ayora",
+    "points": 1
+  },
+  {
+    "name": "Tiger Christensen",
+    "points": 1
+  },
+  {
+    "name": "Shaun Norris",
+    "points": 1
+  },
+  {
+    "name": "Jayden Schaper",
+    "points": 1
+  },
+  {
+    "name": "Marcus Plunkett",
+    "points": 1
+  },
+  {
+    "name": "Ren Yonezawa",
+    "points": 1
+  },
+  {
+    "name": "Jackson Suber",
+    "points": 1
+  },
+  {
+    "name": "Alex Smalley",
+    "points": 1
+  },
+  {
+    "name": "Maverick McNealy",
+    "points": 1
+  },
+  {
+    "name": "Alex Fitzpatrick",
+    "points": 1
+  },
+  {
+    "name": "Aldrich Potgieter",
+    "points": 1
+  },
+  {
+    "name": "Jose Luis Ballester Barrio",
+    "points": 1
+  },
+  {
+    "name": "Martin Couvra",
+    "points": 1
+  },
+  {
+    "name": "Johnny Keefer",
+    "points": 1
+  },
+  {
+    "name": "Brian Harman",
+    "points": 1
+  },
+  {
+    "name": "Ryan Gerard",
+    "points": 1
+  },
+  {
+    "name": "Lev Grinberg",
+    "points": 1
+  },
+  {
+    "name": "Bernd Wiesberger",
+    "points": 1
+  },
+  {
+    "name": "Henrik Stenson",
+    "points": 1
+  },
+  {
+    "name": "Jake Knapp",
+    "points": 1
+  },
+  {
+    "name": "Keita Nakajima",
+    "points": 1
+  },
+  {
+    "name": "Jack Buchanan",
+    "points": 1
+  },
+  {
+    "name": "Jack McDonald",
+    "points": 1
+  },
+  {
+    "name": "David Howard",
+    "points": 1
+  },
+  {
+    "name": "Michael Hollick",
+    "points": 1
+  },
+  {
+    "name": "Rasmus Neergaard Petersen",
+    "points": 1
+  },
+  {
+    "name": "Scott Vincent",
+    "points": 1
+  },
+  {
+    "name": "Matt Wallace",
+    "points": 1
+  },
+  {
+    "name": "Kurt Kitayama",
+    "points": 1
+  },
+  {
+    "name": "Joaquin Niemann",
+    "points": 1
+  },
+  {
+    "name": "Gary Woodland",
+    "points": 1
+  },
+  {
+    "name": "Sungjae Im",
+    "points": 1
+  },
+  {
+    "name": "Keith Mitchell",
+    "points": 1
+  },
+  {
+    "name": "Corey Conners",
+    "points": 1
+  },
+  {
+    "name": "Andy Sullivan",
+    "points": 1
+  },
+  {
+    "name": "Victor Perez",
+    "points": 1
+  },
+  {
+    "name": "Nick Taylor",
+    "points": 1
+  },
+  {
+    "name": "Ryan Fox",
+    "points": 1
+  },
+  {
+    "name": "Sam Bairstow",
+    "points": 1
+  },
+  {
+    "name": "Matthew Jordan",
+    "points": 1
+  },
+  {
+    "name": "Padraig Harrington",
+    "points": 1
+  },
+  {
+    "name": "Francesco Molinari",
+    "points": 1
+  },
+  {
+    "name": "Rickie Fowler",
+    "points": 1
+  },
+  {
+    "name": "Fifa Laopakdee",
+    "points": 1
+  },
+  {
+    "name": "Antoine Rozner",
+    "points": 1
+  },
+  {
+    "name": "Francesco Laporta",
+    "points": 1
+  },
+  {
+    "name": "Michael Kim",
+    "points": 1
+  },
+  {
+    "name": "Jesper Svensson",
+    "points": 1
+  },
+  {
+    "name": "Sami Valimaki",
+    "points": 1
+  },
+  {
+    "name": "Austen Truslow",
+    "points": 1
+  },
+  {
+    "name": "Tim Wiedemeyer",
+    "points": 1
+  },
+  {
+    "name": "MJ Daffue",
+    "points": 1
+  },
+  {
+    "name": "Michael Brennan",
+    "points": 1
+  },
+  {
+    "name": "Travis Smyth",
+    "points": 1
+  },
+  {
+    "name": "James Nicholas",
+    "points": 1
+  },
+  {
+    "name": "Mateo Pulcini",
+    "points": 1
+  },
+  {
+    "name": "Nevill Ruiter",
+    "points": 1
+  },
+  {
+    "name": "Frederic Lacroix",
+    "points": 1
+  },
+  {
+    "name": "Keegan Bradley",
+    "points": 1
+  },
+  {
+    "name": "Matthew Baldwin",
+    "points": 1
+  },
+  {
+    "name": "Matthew Southgate",
+    "points": 1
+  },
+  {
+    "name": "Hennie Du Plessis",
+    "points": 1
+  },
+  {
+    "name": "Darren Clarke",
+    "points": 1
+  },
+  {
+    "name": "Stewart Cink",
+    "points": 1
+  },
+  {
+    "name": "David Duval",
+    "points": 1
+  },
+  {
+    "name": "Baard Bjoernevik Skogen",
+    "points": 1
+  },
+  {
+    "name": "Alejandro De Castro Piera",
+    "points": 1
+  },
+  {
+    "name": "Jordan Smith",
+    "points": 1
+  }
+]
