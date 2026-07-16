@@ -441,9 +441,10 @@ elif page == "📊 Leaderboard":
             """, unsafe_allow_html=True)
 st.divider()
 import io
+      st.divider()
         export_data = []
-        for i, r in enumerate(results):
-            pos = ["1st","2nd","3rd"][i] if i < 3 else f"{i+1}th"
+        for idx, r in enumerate(results):
+            pos = ["1st","2nd","3rd"][idx] if idx < 3 else f"{idx+1}th"
             contributing_names = " + ".join([f"{n} ({fmt_par(s)})" for n, s in r['pick_scores'][:2]])
             other_names = ", ".join([n for n, s in r['pick_scores'][2:]]) if len(r['pick_scores']) > 2 else "-"
             export_data.append({
@@ -463,4 +464,4 @@ import io
             data=output,
             file_name="open_leaderboard.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        )  
