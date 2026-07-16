@@ -13,6 +13,14 @@ def save(file, data):
     with open(file, "w") as f: json.dump(data, f, indent=2)
 
 PAR = 70
+HEADER_IMG = "https://i.postimg.cc/RhN53Hrs/IMG-5175.jpg"
+
+def show_header():
+    st.markdown(f"""
+    <div style="width:100%;margin-bottom:24px;border-radius:12px;overflow:hidden;max-height:200px">
+        <img src="{HEADER_IMG}" style="width:100%;object-fit:cover;object-position:center 40%">
+    </div>
+    """, unsafe_allow_html=True)
 
 OPEN_FIELD = [
     {"name":"Scottie Scheffler","points":10},
@@ -223,6 +231,7 @@ if tournament.get("tournament"):
 page = st.sidebar.radio("Navigate", ["🏆 Setup", "⛳ Field & Points", "👥 Friend Picks", "📝 Score Updates", "📊 Leaderboard"])
 
 if page == "🏆 Setup":
+    show_header()
     st.title("🏆 Tournament Setup")
     name = st.text_input("Tournament name", value=tournament.get("tournament", "The 154th Open"))
     friends_text = st.text_area("Friends — one per line", value="\n".join(tournament.get("friends", [])))
@@ -234,6 +243,7 @@ if page == "🏆 Setup":
             st.rerun()
 
 elif page == "⛳ Field & Points":
+    show_header()
     st.title("⛳ Field & Points")
     if not field:
         st.info(f"Ready to load {len(FIELD_CLEAN)} players with points from bookmaker odds.")
@@ -275,6 +285,7 @@ elif page == "⛳ Field & Points":
             st.rerun()
 
 elif page == "👥 Friend Picks":
+    show_header()
     st.title("👥 Friend Picks")
     BUDGET = 16
     if not tournament.get("friends"):
@@ -317,8 +328,10 @@ elif page == "👥 Friend Picks":
                 st.success(f"Saved {len(new_picks)} picks for {friend} ({total} pts)")
 
 elif page == "📝 Score Updates":
+    show_header()
     st.title("📝 Score Updates")
     st.caption("Update scores here first — leaderboard unlocks once you confirm")
+    st.markdown("📺 **Live scores:** [theopen.com/leaderboard](https://www.theopen.com/leaderboard)")
 
     if "scores_confirmed" not in st.session_state:
         st.session_state.scores_confirmed = False
@@ -371,6 +384,7 @@ elif page == "📝 Score Updates":
             st.success("✅ Scores confirmed — Leaderboard is unlocked")
 
 elif page == "📊 Leaderboard":
+    show_header()
     st.title("📊 Leaderboard")
 
     if not picks:
@@ -379,7 +393,7 @@ elif page == "📊 Leaderboard":
         st.warning("⚠️ Please go to **📝 Score Updates** first and confirm scores before viewing the leaderboard.")
         st.info("Click '📝 Score Updates' in the left sidebar")
     else:
-        st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = contributing to score · ☆ = not counting")
+        st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = counting towards score · ☆ = not counting · all scores relative to par")
 
         if st.button("🔄 Refresh"):
             st.session_state.scores_confirmed = False
