@@ -439,21 +439,3 @@ elif page == "📊 Leaderboard":
             pos = ["1st","2nd","3rd"][idx] if idx < 3 else f"{idx+1}th"
             contributing_names = " + ".join([f"{n} ({fmt_par(s)})" for n, s in r['pick_scores'][:2]])
             other_names = ", ".join([n for n, s in r['pick_scores'][2:]]) if len(r['pick_scores']) > 2 else "-"
-            export_data.append({
-                "Position": pos,
-                "Friend": r['friend'],
-                "Score": r['par_label'],
-                "Best 2 Players": contributing_names,
-                "Other Picks": other_names,
-            })
-        export_df = pd.DataFrame(export_data)
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            export_df.to_excel(writer, index=False, sheet_name="Leaderboard")
-        output.seek(0)
-        st.download_button(
-            label="📥 Export Leaderboard to Excel",
-            data=output,
-            file_name="open_leaderboard.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )  
