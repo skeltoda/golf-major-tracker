@@ -234,6 +234,10 @@ page = st.sidebar.radio("Navigate", ["🏆 Setup", "⛳ Field & Points", "👥 F
 if page == "🏆 Setup":
     show_header()
     st.title("🏆 Tournament Setup")
+    pin = st.text_input("Enter admin PIN", type="password")
+    if pin != st.secrets["ADMIN_PIN"]:
+        st.warning("Admin access only.")
+        st.stop()
     name = st.text_input("Tournament name", value=tournament.get("tournament", "The 154th Open"))
     friends_text = st.text_area("Friends — one per line", value="\n".join(tournament.get("friends", [])))
     if st.button("Save", type="primary"):
@@ -246,6 +250,10 @@ if page == "🏆 Setup":
 elif page == "⛳ Field & Points":
     show_header()
     st.title("⛳ Field & Points")
+    pin = st.text_input("Enter admin PIN", type="password")
+    if pin != st.secrets["ADMIN_PIN"]:
+        st.warning("Admin access only.")
+        st.stop()
     if not field:
         st.info(f"Ready to load {len(FIELD_CLEAN)} players with points from bookmaker odds.")
         if st.button("📥 Load field", type="primary"):
@@ -288,6 +296,10 @@ elif page == "⛳ Field & Points":
 elif page == "👥 Friend Picks":
     show_header()
     st.title("👥 Friend Picks")
+    pin = st.text_input("Enter admin PIN", type="password")
+    if pin != st.secrets["ADMIN_PIN"]:
+        st.warning("Admin access only.")
+        st.stop()
     BUDGET = 16
     if not tournament.get("friends"):
         st.warning("Add friends in Setup first.")
