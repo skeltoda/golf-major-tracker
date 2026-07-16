@@ -175,10 +175,9 @@ for p in OPEN_FIELD:
         seen.add(p["name"])
         FIELD_CLEAN.append(p)
 
-def fmt_par(strokes):
-    diff = strokes - PAR
-    if diff == 0: return "E"
-    return f"{diff:+d}"
+def fmt_par(score):
+    if score == 0: return "E"
+    return f"{score:+d}"
 
 def fetch_live_scores():
     try:
@@ -340,13 +339,12 @@ elif page == "📝 Score Updates":
             cols = st.columns(3)
             for i, name in enumerate(picked):
                 with cols[i % 3]:
-                    current = int(scores.get(name, PAR))
-                    current_par = fmt_par(current)
+                    current = int(scores.get(name, 0))
                     new_s[name] = st.number_input(
-                        f"{name}  ({current_par})",
+                        f"{name}",
                         value=current,
-                        min_value=50,
-                        max_value=120,
+                        min_value=-30,
+                        max_value=30,
                         key=f"su_{name}"
                     )
 
@@ -391,11 +389,10 @@ elif page == "📊 Leaderboard":
         results = []
         for friend in tournament.get("friends", []):
             fp = picks.get(friend, [])
-            pick_scores = [(n, int(scores.get(n, PAR))) for n in fp]
+            pick_scores = [(n, int(scores.get(n, 0))) for n in fp]
             pick_scores.sort(key=lambda x: x[1])
             contributing = [pick_scores[0][0], pick_scores[1][0]] if len(pick_scores) >= 2 else []
-            combined_strokes = sum(s for _, s in pick_scores[:2]) if len(pick_scores) >= 2 else PAR * 2
-            combined_par = combined_strokes - (PAR * 2)
+            combined_par = sum(s for _, s in pick_scores[:2]) if len(pick_scores) >= 2 else 0
             par_label = f"{combined_par:+d}" if combined_par != 0 else "E"
             results.append({
                 "friend": friend,
