@@ -386,7 +386,6 @@ elif page == "📝 Score Updates":
 elif page == "📊 Leaderboard":
     show_header()
     st.title("📊 Leaderboard")
-
     if not picks:
         st.warning("No picks entered yet.")
     elif not st.session_state.get("scores_confirmed", False):
@@ -394,12 +393,10 @@ elif page == "📊 Leaderboard":
         st.info("Click '📝 Score Updates' in the left sidebar")
     else:
         st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = counting towards score · ☆ = not counting · all scores relative to par")
-
         if st.button("🔄 Refresh"):
             st.session_state.scores_confirmed = False
             st.rerun()
-
-        medals = ["🥇", "🥈", "🥉"]
+        medals = ["🥇","🥈","🥉"]
         results = []
         for friend in tournament.get("friends", []):
             fp = picks.get(friend, [])
@@ -415,13 +412,10 @@ elif page == "📊 Leaderboard":
                 "pick_scores": pick_scores,
                 "contributing": contributing,
             })
-
         results.sort(key=lambda x: x["combined_par"])
-
         for i, r in enumerate(results):
             pos = medals[i] if i < 3 else f"{i + 1}."
             bg = "#F0FDF4" if i == 0 else "#FAFAFA"
-
             st.markdown(f"""
             <div style="background:{bg};border:1px solid #E2E8F0;border-radius:12px;padding:14px 18px;margin-bottom:10px">
                 <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
@@ -439,9 +433,7 @@ elif page == "📊 Leaderboard":
                 </div>
             </div>
             """, unsafe_allow_html=True)
-st.divider()
-import io
-      st.divider()
+        st.divider()
         export_data = []
         for idx, r in enumerate(results):
             pos = ["1st","2nd","3rd"][idx] if idx < 3 else f"{idx+1}th"
