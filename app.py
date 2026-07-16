@@ -182,24 +182,27 @@ def fmt_par(strokes):
 
 def fetch_live_scores():
     try:
-        url = "https://site.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga"
-        r = requests.get(url, timeout=5)
-        data = r.json()
-        for event in data.get("events", []):
-            name = event.get("name","").lower()
-            if "open" in name or "birkdale" in name:
-                scores = {}
-                for comp in event.get("competitions", []):
-                    for p in comp.get("competitors", []):
-                        pname = p.get("athlete",{}).get("displayName","")
-                        strokes = sum(
-                            int(ls["value"]) for ls in p.get("linescores",[])
-                            if str(ls.get("value","")).lstrip("-").isdigit()
-                        )
-                        if pname and strokes > 0:
-                            scores[pname] = strokes
-                return scores, None
-        return {}, "Tournament not yet started"
+        for league in ["pga", "eur", "golf"]:
+            url = f"https://site.api.espn.com/apis/site/v2/sports/golf/leaderboard?league={league}"
+            r = requests.get(url, timeout=5)
+            data = r.json()
+            for event in data.get("events", []):
+                ename = event.get("name", "").lower()
+                status = event.get("status", {}).get("type", {}).get("name", "")
+                if any(x in ename for x in ["open", "birkdale", "british"]) or status == "STATUS_IN_PROGRESS":
+                    scores = {}
+                    for comp in event.get("competitions", []):
+                        for p in comp.get("competitors", []):
+                            pname = p.get("athlete", {}).get("displayName", "")
+                            strokes = sum(
+                                int(ls["value"]) for ls in p.get("linescores", [])
+                                if str(ls.get("value", "")).lstrip("-").isdigit()
+                            )
+                            if pname and strokes > 0:
+                                scores[pname] = strokes
+                    if scores:
+                        return scores, None
+        return {}, "Could not find live scores — try refreshing"
     except Exception as e:
         return {}, str(e)
 
