@@ -18,7 +18,7 @@ HEADER_IMG = "https://i.postimg.cc/RhN53Hrs/IMG-5175.jpg"
 def show_header():
     st.markdown(f"""
     <div style="width:100%;margin-bottom:24px;border-radius:12px;overflow:hidden;max-height:200px">
-        <img src="{HEADER_IMG}" style="width:100%;object-fit:cover;object-position:center 40%">
+        <img src="{HEADER_IMG}" style="width:100%;object-fit:cover;object-position:center 80%">
     </div>
     """, unsafe_allow_html=True)
 
