@@ -184,7 +184,7 @@ def fetch_live_scores():
     try:
         api_key = st.secrets["GOLF_API_KEY"]
         headers = {"x-apisports-key": api_key}
-        url = "https://v1.golf.api-sports.io/tournaments?season=2026"
+        url = "https://api-sports.io/golf/tournaments?season=2026"
         r = requests.get(url, headers=headers, timeout=5)
         data = r.json()
         tournament_id = None
@@ -195,7 +195,7 @@ def fetch_live_scores():
                 break
         if not tournament_id:
             return {}, "Could not find The Open"
-        lb_url = f"https://v1.golf.api-sports.io/leaderboards?tournament={tournament_id}&season=2026"
+        lb_url = f"https://api-sports.io/golf/leaderboards?tournament={tournament_id}&season=2026"
         r2 = requests.get(lb_url, headers=headers, timeout=5)
         lb_data = r2.json()
         scores = {}
