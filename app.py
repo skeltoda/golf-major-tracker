@@ -435,7 +435,6 @@ elif page == "📊 Leaderboard":
             </div>
             """, unsafe_allow_html=True)
         st.divider()
-        export_data = []
         for idx, r in enumerate(results):
             pos = ["1st","2nd","3rd"][idx] if idx < 3 else f"{idx+1}th"
             contributing_names = " + ".join([f"{n} ({fmt_par(s)})" for n, s in r['pick_scores'][:2]])
