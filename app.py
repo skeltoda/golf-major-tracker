@@ -440,7 +440,7 @@ elif page == "📊 Leaderboard":
             </div>
             """, unsafe_allow_html=True)
 st.divider()
-        import io
+import io
         export_data = []
         for i, r in enumerate(results):
             pos = ["1st","2nd","3rd"][i] if i < 3 else f"{i+1}th"
