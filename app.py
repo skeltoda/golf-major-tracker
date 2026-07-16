@@ -221,7 +221,7 @@ if tournament.get("tournament"):
     st.sidebar.markdown(f"**{tournament['tournament']}**")
     st.sidebar.markdown(f"{len(tournament.get('friends', []))} players · 16pt budget")
 
-page = st.sidebar.radio("Navigate", ["🏆 Setup", "⛳ Field & Points", "👥 Friend Picks", "📊 Leaderboard", "🏌️ Live Leaderboard"])
+page = st.sidebar.radio("Navigate", ["🏆 Setup", "⛳ Field & Points", "👥 Friend Picks", "📝 Score Updates", "📊 Leaderboard"])
 
 if page == "🏆 Setup":
     st.title("🏆 Tournament Setup")
@@ -317,106 +317,114 @@ elif page == "👥 Friend Picks":
                 save("picks.json", picks)
                 st.success(f"Saved {len(new_picks)} picks for {friend} ({total} pts)")
 
+elif page == "📝 Score Updates":
+    st.title("📝 Score Updates")
+    st.caption("Update scores here first — leaderboard unlocks once you confirm")
+
+    if "scores_confirmed" not in st.session_state:
+        st.session_state.scores_confirmed = False
+
+    if not picks:
+        st.warning("No picks entered yet — add friend picks first.")
+    else:
+        picked = sorted(set(n for p in picks.values() for n in p))
+        st.subheader(f"{len(picked)} players selected across all friends")
+        st.divider()
+
+        with st.form("score_update_form"):
+            st.markdown("**Enter total strokes per player** — e.g. 68 = -2, 70 = E, 72 = +2")
+            st.markdown("*(Leave at 70 if a player hasn't teed off yet)*")
+            st.write("")
+
+            new_s = {}
+            cols = st.columns(3)
+            for i, name in enumerate(picked):
+                with cols[i % 3]:
+                    current = int(scores.get(name, PAR))
+                    current_par = fmt_par(current)
+                    new_s[name] = st.number_input(
+                        f"{name}  ({current_par})",
+                        value=current,
+                        min_value=50,
+                        max_value=120,
+                        key=f"su_{name}"
+                    )
+
+            st.write("")
+            c1, c2 = st.columns(2)
+            with c1:
+                save_btn = st.form_submit_button("💾 Save & Confirm Scores", type="primary", use_container_width=True)
+            with c2:
+                confirm_btn = st.form_submit_button("✅ No Changes — Confirm", use_container_width=True)
+
+            if save_btn:
+                save("scores.json", new_s)
+                scores = new_s
+                st.session_state.scores_confirmed = True
+                st.success("✅ Scores saved! Head to the Leaderboard.")
+                st.rerun()
+
+            if confirm_btn:
+                st.session_state.scores_confirmed = True
+                st.success("✅ Confirmed — no changes. Head to the Leaderboard.")
+                st.rerun()
+
+        if st.session_state.scores_confirmed:
+            st.success("✅ Scores confirmed — Leaderboard is unlocked")
+
 elif page == "📊 Leaderboard":
     st.title("📊 Leaderboard")
+
     if not picks:
         st.warning("No picks entered yet.")
+    elif not st.session_state.get("scores_confirmed", False):
+        st.warning("⚠️ Please go to **📝 Score Updates** first and confirm scores before viewing the leaderboard.")
+        st.info("Click '📝 Score Updates' in the left sidebar")
     else:
-        st.caption(f"Royal Birkdale · Par {PAR} · Live scores update when tournament starts 17 July")
+        st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = contributing to score · ☆ = not counting")
+
         if st.button("🔄 Refresh"):
+            st.session_state.scores_confirmed = False
             st.rerun()
-        live, error = fetch_live_scores()
-        if live:
-            scores.update(live)
-            save("scores.json", scores)
-            st.success(f"✅ Live scores — {len(live)} players")
-        else:
-            st.info(f"⏳ {error or 'Awaiting tournament start'}")
-            with st.expander("📝 Enter scores manually (total strokes e.g. 68)"):
-                picked = sorted(set(n for p in picks.values() for n in p))
-                with st.form("scores_form"):
-                    cols = st.columns(3)
-                    new_s = {}
-                    for i, name in enumerate(picked):
-                        with cols[i % 3]:
-                            new_s[name] = st.number_input(
-                                name, value=int(scores.get(name, 0)),
-                                min_value=0, max_value=400)
-                    if st.form_submit_button("Update scores"):
-                        save("scores.json", new_s)
-                        scores = new_s
-                        st.success("Updated!")
-                        st.rerun()
+
         medals = ["🥇", "🥈", "🥉"]
         results = []
         for friend in tournament.get("friends", []):
             fp = picks.get(friend, [])
-            scored = [(n, int(scores.get(n, PAR))) for n in fp]
-            scored.sort(key=lambda x: x[1])
-            if len(scored) >= 2:
-                best = scored[:2]
-                combined_strokes = sum(s for _, s in best)
-                combined_par = combined_strokes - (PAR * 2)
-                par_label = f"{combined_par:+d}" if combined_par != 0 else "E"
-                label = f"{best[0][0]} ({fmt_par(best[0][1])}) + {best[1][0]} ({fmt_par(best[1][1])})"
-            else:
-                combined_par = 9999
-                par_label = "-"
-                label = "Awaiting scores"
+            pick_scores = [(n, int(scores.get(n, PAR))) for n in fp]
+            pick_scores.sort(key=lambda x: x[1])
+            contributing = [pick_scores[0][0], pick_scores[1][0]] if len(pick_scores) >= 2 else []
+            combined_strokes = sum(s for _, s in pick_scores[:2]) if len(pick_scores) >= 2 else PAR * 2
+            combined_par = combined_strokes - (PAR * 2)
+            par_label = f"{combined_par:+d}" if combined_par != 0 else "E"
             results.append({
-                "Friend": friend,
-                "Best 2 golfers": label,
-                "Score": par_label,
-                "Sort": combined_par,
-                "All picks": ", ".join(fp)
+                "friend": friend,
+                "par_label": par_label,
+                "combined_par": combined_par,
+                "pick_scores": pick_scores,
+                "contributing": contributing,
             })
-        results.sort(key=lambda x: x["Sort"])
+
+        results.sort(key=lambda x: x["combined_par"])
+
         for i, r in enumerate(results):
-            r["Pos"] = medals[i] if i < 3 else str(i + 1)
-        df = pd.DataFrame(results)[["Pos", "Friend", "Best 2 golfers", "Score", "All picks"]]
-        st.dataframe(df, use_container_width=True, hide_index=True)
+            pos = medals[i] if i < 3 else f"{i + 1}."
+            bg = "#F0FDF4" if i == 0 else "#FAFAFA"
 
-elif page == "🏌️ Live Leaderboard":
-    st.title("🏌️ The 154th Open — Live Leaderboard")
-    st.caption("Royal Birkdale · Par 70 · Auto-updates during the tournament")
-
-    if st.button("🔄 Refresh"):
-        st.rerun()
-
-    try:
-        url = "https://site.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga"
-        r = requests.get(url, timeout=5)
-        data = r.json()
-
-        leaderboard = []
-        found = False
-
-        for event in data.get("events", []):
-            ename = event.get("name", "").lower()
-            if "open" in ename or "birkdale" in ename:
-                found = True
-                for comp in event.get("competitions", []):
-                    for p in comp.get("competitors", []):
-                        name = p.get("athlete", {}).get("displayName", "")
-                        pos = p.get("status", {}).get("position", {}).get("displayName", "-")
-                        score = p.get("score", {}).get("displayValue", "-")
-                        today = p.get("linescores", [{}])[-1].get("displayValue", "-") if p.get("linescores") else "-"
-                        thru = p.get("status", {}).get("thru", {}).get("displayValue", "-")
-                        made_cut = p.get("status", {}).get("type", {}).get("id", "") != "5"
-                        if name:
-                            leaderboard.append({
-                                "Pos": pos,
-                                "Player": name,
-                                "Score": score,
-                                "Today": today,
-                                "Thru": thru,
-                            })
-
-        if leaderboard:
-            df = pd.DataFrame(leaderboard)
-            st.dataframe(df, use_container_width=True, hide_index=True)
-        else:
-            st.info("⏳ Tournament leaderboard not available yet — check back Thursday 17 July when play begins.")
-
-    except Exception as e:
-        st.info("⏳ Tournament not yet started — leaderboard will appear here once play begins on Thursday 17 July.")
+            st.markdown(f"""
+            <div style="background:{bg};border:1px solid #E2E8F0;border-radius:12px;padding:14px 18px;margin-bottom:10px">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+                    <span style="font-size:22px">{pos}</span>
+                    <span style="font-size:18px;font-weight:600;color:#0F172A">{r['friend']}</span>
+                    <span style="font-size:18px;font-weight:700;color:{'#16A34A' if r['combined_par'] < 0 else '#DC2626' if r['combined_par'] > 0 else '#0F172A'}">{r['par_label']}</span>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px">
+                    {''.join([
+                        f'<span style="background:#D1FAE5;color:#065F46;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600">⭐ {name} ({fmt_par(s)})</span>'
+                        if name in r['contributing'] else
+                        f'<span style="background:#F1F5F9;color:#94A3B8;padding:4px 10px;border-radius:20px;font-size:12px">☆ {name} ({fmt_par(s)})</span>'
+                        for name, s in r['pick_scores']
+                    ])}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
