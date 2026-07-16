@@ -384,6 +384,8 @@ elif page == "📝 Score Updates":
             if save_btn:
                 save("scores.json", new_s)
                 scores = new_s
+                from datetime import datetime
+                save("last_updated.json", {"time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")})
                 st.session_state.scores_confirmed = True
                 st.success("✅ Scores saved! Head to the Leaderboard.")
                 st.rerun()
@@ -405,7 +407,22 @@ elif page == "📊 Leaderboard":
         st.warning("⚠️ Please go to **📝 Score Updates** first and confirm scores before viewing the leaderboard.")
         st.info("Click '📝 Score Updates' in the left sidebar")
     else:
-        st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = counting towards score · ☆ = not counting · all scores relative to par")
+        last_updated = load("last_updated.json", {})
+        if last_updated.get("time"):
+            from datetime import datetime
+            updated_time = datetime.strptime(last_updated["time"], "%Y-%m-%d %H:%M:%S")
+            diff = datetime.utcnow() - updated_time
+            mins = int(diff.total_seconds() // 60)
+            if mins < 1:
+                time_str = "just now"
+            elif mins < 60:
+                time_str = f"{mins} mins ago"
+            else:
+                hours = mins // 60
+                time_str = f"{hours}h {mins % 60}m ago"
+            st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = counting · ☆ = not counting · Last updated: {time_str}")
+        else:
+            st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = counting · ☆ = not counting")
         if st.button("🔄 Refresh"):
             st.session_state.scores_confirmed = False
             st.rerun()
