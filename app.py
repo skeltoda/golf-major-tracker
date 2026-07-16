@@ -182,14 +182,19 @@ def fmt_par(strokes):
 
 def fetch_live_scores():
     try:
-        for league in ["pga", "eur", "golf"]:
-            url = f"https://site.api.espn.com/apis/site/v2/sports/golf/leaderboard?league={league}"
+        urls = [
+            "https://site.api.espn.com/apis/site/v2/sports/golf/eur/leaderboard",
+            "https://site.api.espn.com/apis/site/v2/sports/golf/pga/leaderboard",
+        ]
+        for url in urls:
             r = requests.get(url, timeout=5)
             data = r.json()
             for event in data.get("events", []):
                 ename = event.get("name", "").lower()
                 status = event.get("status", {}).get("type", {}).get("name", "")
-                if any(x in ename for x in ["open", "birkdale", "british"]) or status == "STATUS_IN_PROGRESS":
+                is_open = any(x in ename for x in ["open", "birkdale", "british"])
+                is_live = "progress" in status.lower()
+                if is_open or is_live:
                     scores = {}
                     for comp in event.get("competitions", []):
                         for p in comp.get("competitors", []):
@@ -202,7 +207,7 @@ def fetch_live_scores():
                                 scores[pname] = strokes
                     if scores:
                         return scores, None
-        return {}, "Could not find live scores — try refreshing"
+        return {}, "Scores not available — try refreshing"
     except Exception as e:
         return {}, str(e)
 
