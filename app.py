@@ -182,34 +182,42 @@ def fmt_par(strokes):
 
 def fetch_live_scores():
     try:
-        urls = [
-            "https://site.api.espn.com/apis/site/v2/sports/golf/eur/leaderboard",
-            "https://site.api.espn.com/apis/site/v2/sports/golf/pga/leaderboard",
-        ]
-        for url in urls:
-            r = requests.get(url, timeout=5)
-            data = r.json()
-            for event in data.get("events", []):
-                ename = event.get("name", "").lower()
-                status = event.get("status", {}).get("type", {}).get("name", "")
-                is_open = any(x in ename for x in ["open", "birkdale", "british"])
-                is_live = "progress" in status.lower()
-                if is_open or is_live:
-                    scores = {}
-                    for comp in event.get("competitions", []):
-                        for p in comp.get("competitors", []):
-                            pname = p.get("athlete", {}).get("displayName", "")
-                            strokes = sum(
-                                int(ls["value"]) for ls in p.get("linescores", [])
-                                if str(ls.get("value", "")).lstrip("-").isdigit()
-                            )
-                            if pname and strokes > 0:
-                                scores[pname] = strokes
-                    if scores:
-                        return scores, None
-        return {}, "Scores not available — try refreshing"
-    except Exception as e:
-        return {}, str(e)
+        api_key = st.secrets["GOLF_API_KEY"]
+        headers = {"x-apisports-key": api_key}
+        
+        # Get current tournaments
+        url = "https://v1.golf.api-sports.io/tournaments?season=2026"
+        r = requests.get(url, headers=headers, timeout=5)
+        data = r.json()
+        
+        # Find The Open
+        tournament_id = None
+        for t in data.get("response", []):
+            name = t.get("name", "").lower()
+            if "open" in name and ("british" in name or "championship" in name):
+                tournament_id = t.get("id")
+                break
+        
+        if not tournament_id:
+            return {}, "Could not find The Open in tournament list"
+        
+        # Get leaderboard
+        lb_url = f"https://v1.golf.api-sports.io/leaderboards?tournament={tournament_id}&season=2026"
+        r2 = requests.get(lb_url, headers=headers, timeout=5)
+        lb_data = r2.json()
+        
+        scores = {}
+        for player in lb_data.get("response", []):
+            name = player.get("player", {}).get("name", "")
+            total = player.get("scores", {}).get("total", None)
+            if name and total is not None:
+                # Convert score to par to total strokes
+                strokes = PAR * 4 + int(total)
+                scores[name] = strokes
+        
+        if scores:
+            return scores, None
+        return {},
 
 tournament = load("tournament.json", {})
 field = load("field.json", [])
