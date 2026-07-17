@@ -1,27 +1,46 @@
 import streamlit as st
-import io
 import pandas as pd
-import json, os, requests
+import json, os, requests, io
+from datetime import datetime
 
 st.set_page_config(page_title="Golf Major Tracker", page_icon="⛳", layout="wide")
 
-def load(file, default):
-    if os.path.exists(file):
-        with open(file) as f: return json.load(f)
-    return default
+# ── SUPABASE HELPERS ──────────────────────────────────────────────────────────
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+HEADERS = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+    "Prefer": "return=minimal"
+}
 
-def save(file, data):
-    with open(file, "w") as f: json.dump(data, f, indent=2)
+def db_get(key):
+    try:
+        r = requests.get(
+            f"{SUPABASE_URL}/rest/v1/app_data?key=eq.{key}&select=value",
+            headers=HEADERS, timeout=5
+        )
+        data = r.json()
+        if data:
+            return json.loads(data[0]["value"])
+        return None
+    except:
+        return None
+
+def db_set(key, value):
+    try:
+        requests.patch(
+            f"{SUPABASE_URL}/rest/v1/app_data?key=eq.{key}",
+            headers=HEADERS,
+            json={"value": json.dumps(value)},
+            timeout=5
+        )
+    except:
+        pass
 
 PAR = 70
 HEADER_IMG = "https://i.postimg.cc/RhN53Hrs/IMG-5175.jpg"
-
-def show_header():
-    st.markdown(f"""
-    <div style="width:100%;margin-bottom:24px;border-radius:12px;overflow:hidden;max-height:200px">
-        <img src="{HEADER_IMG}" style="width:100%;object-fit:cover;object-position:center 80%">
-    </div>
-    """, unsafe_allow_html=True)
 
 OPEN_FIELD = [
     {"name":"Scottie Scheffler","points":10},
@@ -188,41 +207,19 @@ def fmt_par(score):
     if score == 0: return "E"
     return f"{score:+d}"
 
-def fetch_live_scores():
-    try:
-        api_key = st.secrets["GOLF_API_KEY"]
-        headers = {"x-apisports-key": api_key}
-        url = "https://api-sports.io/golf/tournaments?season=2026"
-        r = requests.get(url, headers=headers, timeout=5)
-        data = r.json()
-        tournament_id = None
-        for t in data.get("response", []):
-            name = t.get("name", "").lower()
-            if "open" in name and "championship" in name:
-                tournament_id = t.get("id")
-                break
-        if not tournament_id:
-            return {}, "Could not find The Open"
-        lb_url = f"https://api-sports.io/golf/leaderboards?tournament={tournament_id}&season=2026"
-        r2 = requests.get(lb_url, headers=headers, timeout=5)
-        lb_data = r2.json()
-        scores = {}
-        for player in lb_data.get("response", []):
-            name = player.get("player", {}).get("name", "")
-            total = player.get("scores", {}).get("total", None)
-            if name and total is not None:
-                strokes = PAR * 4 + int(total)
-                scores[name] = strokes
-        if scores:
-            return scores, None
-        return {}, "No scores available yet"
-    except Exception as e:
-        return {}, str(e)
+def show_header():
+    st.markdown(f"""
+    <div style="width:100%;margin-bottom:24px;border-radius:12px;overflow:hidden;max-height:200px">
+        <img src="{HEADER_IMG}" style="width:100%;object-fit:cover;object-position:center 60%">
+    </div>
+    """, unsafe_allow_html=True)
 
-tournament = load("tournament.json", {})
-field = load("field.json", [])
-picks = load("picks.json", {})
-scores = load("scores.json", {})
+# ── LOAD DATA FROM SUPABASE ───────────────────────────────────────────────────
+tournament  = db_get("tournament") or {}
+field       = db_get("field") or []
+picks       = db_get("picks") or {}
+scores      = db_get("scores") or {}
+last_updated = db_get("last_updated") or {}
 
 st.sidebar.title("⛳ Golf Major Tracker")
 if tournament.get("tournament"):
@@ -231,7 +228,129 @@ if tournament.get("tournament"):
 
 page = st.sidebar.radio("Navigate", ["📊 Leaderboard", "📝 Score Updates", "🏆 Setup", "⛳ Field & Points", "👥 Friend Picks"])
 
-if page == "🏆 Setup":
+# ── LEADERBOARD ───────────────────────────────────────────────────────────────
+if page == "📊 Leaderboard":
+    show_header()
+    st.title("📊 Leaderboard")
+    if not picks:
+        st.warning("No picks entered yet.")
+    else:
+        if last_updated.get("time"):
+            updated_time = datetime.strptime(last_updated["time"], "%Y-%m-%d %H:%M:%S")
+            diff = datetime.utcnow() - updated_time
+            mins = int(diff.total_seconds() // 60)
+            if mins < 1:
+                time_str = "just now"
+            elif mins < 60:
+                time_str = f"{mins} minutes ago"
+            else:
+                hours = mins // 60
+                time_str = f"{hours}h {mins % 60}m ago"
+            st.markdown(f"""
+            <div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:12px 16px;margin-bottom:16px">
+                <p style="margin:0;font-size:14px;font-weight:700;color:#92400E">⏱️ Scores last updated: {time_str}</p>
+                <p style="margin:4px 0 0;font-size:13px;color:#92400E">To refresh the leaderboard, go to <b>📝 Score Updates</b> in the left sidebar and confirm the latest scores.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:12px 16px;margin-bottom:16px">
+                <p style="margin:0;font-size:14px;font-weight:700;color:#92400E">⏱️ Scores not yet updated</p>
+                <p style="margin:4px 0 0;font-size:13px;color:#92400E">Go to <b>📝 Score Updates</b> in the left sidebar to enter the latest scores.</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = counting · ☆ = not counting · all scores relative to par")
+
+        medals = ["🥇", "🥈", "🥉"]
+        results = []
+        for friend in tournament.get("friends", []):
+            fp = picks.get(friend, [])
+            pick_scores = [(n, int(scores.get(n, 0))) for n in fp]
+            pick_scores.sort(key=lambda x: x[1])
+            contributing = [pick_scores[0][0], pick_scores[1][0]] if len(pick_scores) >= 2 else []
+            combined_par = sum(s for _, s in pick_scores[:2]) if len(pick_scores) >= 2 else 0
+            par_label = f"{combined_par:+d}" if combined_par != 0 else "E"
+            results.append({
+                "friend": friend,
+                "par_label": par_label,
+                "combined_par": combined_par,
+                "pick_scores": pick_scores,
+                "contributing": contributing,
+            })
+
+        results.sort(key=lambda x: x["combined_par"])
+
+        for i, r in enumerate(results):
+            pos = medals[i] if i < 3 else f"{i + 1}."
+            bg = "#F0FDF4" if i == 0 else "#FAFAFA"
+            st.markdown(f"""
+            <div style="background:{bg};border:1px solid #E2E8F0;border-radius:12px;padding:14px 18px;margin-bottom:10px">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+                    <span style="font-size:22px">{pos}</span>
+                    <span style="font-size:18px;font-weight:600;color:#0F172A">{r['friend']}</span>
+                    <span style="font-size:18px;font-weight:700;color:{'#16A34A' if r['combined_par'] < 0 else '#DC2626' if r['combined_par'] > 0 else '#0F172A'}">{r['par_label']}</span>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px">
+                    {''.join([
+                        f'<span style="background:#D1FAE5;color:#065F46;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600">⭐ {name} ({fmt_par(s)})</span>'
+                        if name in r['contributing'] else
+                        f'<span style="background:#F1F5F9;color:#94A3B8;padding:4px 10px;border-radius:20px;font-size:12px">☆ {name} ({fmt_par(s)})</span>'
+                        for name, s in r['pick_scores']
+                    ])}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        st.divider()
+
+# ── SCORE UPDATES ─────────────────────────────────────────────────────────────
+elif page == "📝 Score Updates":
+    show_header()
+    st.title("📝 Score Updates")
+    st.caption("Update scores here — leaderboard updates immediately")
+    st.markdown("📺 **Live scores:** [theopen.com/leaderboard](https://www.theopen.com/leaderboard)")
+    st.divider()
+
+    if not picks:
+        st.warning("No picks entered yet.")
+    else:
+        picked = sorted(set(n for p in picks.values() for n in p))
+        st.subheader(f"{len(picked)} players in the competition")
+
+        with st.form("score_update_form"):
+            new_s = {}
+            cols = st.columns(3)
+            for i, name in enumerate(picked):
+                with cols[i % 3]:
+                    current = int(scores.get(name, 0))
+                    new_s[name] = st.number_input(
+                        f"{name}  ({fmt_par(current)})",
+                        value=current,
+                        min_value=-30,
+                        max_value=30,
+                        key=f"su_{name}"
+                    )
+
+            st.write("")
+            c1, c2 = st.columns(2)
+            with c1:
+                save_btn = st.form_submit_button("💾 Save & Update Leaderboard", type="primary", use_container_width=True)
+            with c2:
+                confirm_btn = st.form_submit_button("✅ No Changes", use_container_width=True)
+
+            if save_btn:
+                db_set("scores", new_s)
+                db_set("last_updated", {"time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")})
+                st.success("✅ Scores saved! Leaderboard updated.")
+                st.rerun()
+
+            if confirm_btn:
+                db_set("last_updated", {"time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")})
+                st.success("✅ Confirmed — no changes.")
+                st.rerun()
+
+# ── SETUP ─────────────────────────────────────────────────────────────────────
+elif page == "🏆 Setup":
     show_header()
     st.title("🏆 Tournament Setup")
     pin = st.text_input("Enter admin PIN", type="password")
@@ -243,10 +362,11 @@ if page == "🏆 Setup":
     if st.button("Save", type="primary"):
         if name and friends_text.strip():
             friends = [f.strip() for f in friends_text.strip().split("\n") if f.strip()]
-            save("tournament.json", {"tournament": name, "friends": friends})
+            db_set("tournament", {"tournament": name, "friends": friends})
             st.success(f"Saved! {len(friends)} players.")
             st.rerun()
 
+# ── FIELD & POINTS ─────────────────────────────────────────────────────────────
 elif page == "⛳ Field & Points":
     show_header()
     st.title("⛳ Field & Points")
@@ -257,7 +377,7 @@ elif page == "⛳ Field & Points":
     if not field:
         st.info(f"Ready to load {len(FIELD_CLEAN)} players with points from bookmaker odds.")
         if st.button("📥 Load field", type="primary"):
-            save("field.json", FIELD_CLEAN)
+            db_set("field", FIELD_CLEAN)
             st.success("Field loaded!")
             st.rerun()
     else:
@@ -272,10 +392,8 @@ elif page == "⛳ Field & Points":
         st.subheader("Override a player's points")
         with st.form("override"):
             c1, c2, c3 = st.columns([3, 1, 1])
-            with c1:
-                selected = st.selectbox("Player", [p["name"] for p in field])
-            with c2:
-                new_pts = st.number_input("Points", 1, 10, 1)
+            with c1: selected = st.selectbox("Player", [p["name"] for p in field])
+            with c2: new_pts = st.number_input("Points", 1, 10, 1)
             with c3:
                 st.write("")
                 st.write("")
@@ -284,15 +402,16 @@ elif page == "⛳ Field & Points":
                 for p in field:
                     if p["name"] == selected:
                         p["points"] = new_pts
-                save("field.json", field)
+                db_set("field", field)
                 st.success(f"Updated {selected} to {new_pts} pts")
                 st.rerun()
         st.divider()
         st.dataframe(df, use_container_width=True)
         if st.button("🗑️ Reset field"):
-            save("field.json", [])
+            db_set("field", [])
             st.rerun()
 
+# ── FRIEND PICKS ──────────────────────────────────────────────────────────────
 elif page == "👥 Friend Picks":
     show_header()
     st.title("👥 Friend Picks")
@@ -337,156 +456,5 @@ elif page == "👥 Friend Picks":
                 st.error(f"Over budget — {total}/{BUDGET} pts.")
             else:
                 picks[friend] = new_picks
-                save("picks.json", picks)
+                db_set("picks", picks)
                 st.success(f"Saved {len(new_picks)} picks for {friend} ({total} pts)")
-
-elif page == "📝 Score Updates":
-    show_header()
-    st.title("📝 Score Updates")
-    st.caption("Update scores here first — leaderboard unlocks once you confirm")
-    st.markdown("📺 **Live scores:** [theopen.com/leaderboard](https://www.theopen.com/leaderboard)")
-
-    if "scores_confirmed" not in st.session_state:
-        st.session_state.scores_confirmed = False
-
-    if not picks:
-        st.warning("No picks entered yet — add friend picks first.")
-    else:
-        picked = sorted(set(n for p in picks.values() for n in p))
-        st.subheader(f"{len(picked)} players selected across all friends")
-        st.divider()
-
-        with st.form("score_update_form"):
-            st.markdown("**Enter total strokes per player** — e.g. 68 = -2, 70 = E, 72 = +2")
-            st.markdown("*(Leave at 70 if a player hasn't teed off yet)*")
-            st.write("")
-
-            new_s = {}
-            cols = st.columns(3)
-            for i, name in enumerate(picked):
-                with cols[i % 3]:
-                    current = int(scores.get(name, 0))
-                    new_s[name] = st.number_input(
-                        f"{name}",
-                        value=current,
-                        min_value=-30,
-                        max_value=30,
-                        key=f"su_{name}"
-                    )
-
-            st.write("")
-            c1, c2 = st.columns(2)
-            with c1:
-                save_btn = st.form_submit_button("💾 Save & Confirm Scores", type="primary", use_container_width=True)
-            with c2:
-                confirm_btn = st.form_submit_button("✅ No Changes — Confirm", use_container_width=True)
-
-            if save_btn:
-                save("scores.json", new_s)
-                scores = new_s
-                from datetime import datetime
-                save("last_updated.json", {"time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")})
-                st.session_state.scores_confirmed = True
-                st.success("✅ Scores saved! Head to the Leaderboard.")
-                st.rerun()
-
-            if confirm_btn:
-                st.session_state.scores_confirmed = True
-                st.success("✅ Confirmed — no changes. Head to the Leaderboard.")
-                st.rerun()
-
-        if st.session_state.scores_confirmed:
-            st.success("✅ Scores confirmed — Leaderboard is unlocked")
-
-elif page == "📊 Leaderboard":
-    show_header()
-    st.title("📊 Leaderboard")
-    if not picks:
-        st.warning("No picks entered yet.")
-
-    else:
-        last_updated = load("last_updated.json", {})
-        if last_updated.get("time"):
-            from datetime import datetime
-            updated_time = datetime.strptime(last_updated["time"], "%Y-%m-%d %H:%M:%S")
-            diff = datetime.utcnow() - updated_time
-            mins = int(diff.total_seconds() // 60)
-            if mins < 1:
-                time_str = "just now"
-            elif mins < 60:
-                time_str = f"{mins} mins ago"
-            else:
-                hours = mins // 60
-                time_str = f"{hours}h {mins % 60}m ago"
-            st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = counting · ☆ = not counting · Last updated: {time_str}")
-        else:
-            st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = counting · ☆ = not counting")
-        last_updated = load("last_updated.json", {})
-        if last_updated.get("time"):
-            from datetime import datetime
-            updated_time = datetime.strptime(last_updated["time"], "%Y-%m-%d %H:%M:%S")
-            diff = datetime.utcnow() - updated_time
-            mins = int(diff.total_seconds() // 60)
-            if mins < 1:
-                time_str = "just now"
-            elif mins < 60:
-                time_str = f"{mins} minutes ago"
-            else:
-                hours = mins // 60
-                time_str = f"{hours}h {mins % 60}m ago"
-            st.markdown(f"""
-            <div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:12px 16px;margin-bottom:16px">
-                <p style="margin:0;font-size:14px;font-weight:700;color:#92400E">⏱️ Scores last updated: {time_str}</p>
-                <p style="margin:4px 0 0;font-size:13px;color:#92400E">To refresh the leaderboard with latest scores, go to 
-                <a href="?page=scores" style="color:#B45309;font-weight:600">📝 Score Updates</a> in the left sidebar and confirm the latest scores.</p>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:12px 16px;margin-bottom:16px">
-                <p style="margin:0;font-size:14px;font-weight:700;color:#92400E">⏱️ Scores not yet updated</p>
-                <p style="margin:4px 0 0;font-size:13px;color:#92400E">To update the leaderboard, go to <b>📝 Score Updates</b> in the left sidebar and enter the latest scores.</p>
-            </div>
-            """, unsafe_allow_html=True)
-        medals = ["🥇","🥈","🥉"]
-        results = []
-        for friend in tournament.get("friends", []):
-            fp = picks.get(friend, [])
-            pick_scores = [(n, int(scores.get(n, 0))) for n in fp]
-            pick_scores.sort(key=lambda x: x[1])
-            contributing = [pick_scores[0][0], pick_scores[1][0]] if len(pick_scores) >= 2 else []
-            combined_par = sum(s for _, s in pick_scores[:2]) if len(pick_scores) >= 2 else 0
-            par_label = f"{combined_par:+d}" if combined_par != 0 else "E"
-            results.append({
-                "friend": friend,
-                "par_label": par_label,
-                "combined_par": combined_par,
-                "pick_scores": pick_scores,
-                "contributing": contributing,
-            })
-        results.sort(key=lambda x: x["combined_par"])
-        for i, r in enumerate(results):
-            pos = medals[i] if i < 3 else f"{i + 1}."
-            bg = "#F0FDF4" if i == 0 else "#FAFAFA"
-            st.markdown(f"""
-            <div style="background:{bg};border:1px solid #E2E8F0;border-radius:12px;padding:14px 18px;margin-bottom:10px">
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-                    <span style="font-size:22px">{pos}</span>
-                    <span style="font-size:18px;font-weight:600;color:#0F172A">{r['friend']}</span>
-                    <span style="font-size:18px;font-weight:700;color:{'#16A34A' if r['combined_par'] < 0 else '#DC2626' if r['combined_par'] > 0 else '#0F172A'}">{r['par_label']}</span>
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:6px">
-                    {''.join([
-                        f'<span style="background:#D1FAE5;color:#065F46;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600">⭐ {name} ({fmt_par(s)})</span>'
-                        if name in r['contributing'] else
-                        f'<span style="background:#F1F5F9;color:#94A3B8;padding:4px 10px;border-radius:20px;font-size:12px">☆ {name} ({fmt_par(s)})</span>'
-                        for name, s in r['pick_scores']
-                    ])}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        st.divider()
-        for idx, r in enumerate(results):
-            pos = ["1st","2nd","3rd"][idx] if idx < 3 else f"{idx+1}th"
-            contributing_names = " + ".join([f"{n} ({fmt_par(s)})" for n, s in r['pick_scores'][:2]])
-            other_names = ", ".join([n for n, s in r['pick_scores'][2:]]) if len(r['pick_scores']) > 2 else "-"
