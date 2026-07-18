@@ -248,9 +248,14 @@ if page == "📊 Leaderboard":
                 hours = mins // 60
                 time_str = f"{hours}h {mins % 60}m ago"
             st.markdown(f"""
-            <div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:12px 16px;margin-bottom:16px">
-                <p style="margin:0;font-size:14px;font-weight:700;color:#92400E">⏱️ Scores last updated: {time_str}</p>
-                <p style="margin:4px 0 0;font-size:13px;color:#92400E">To refresh the leaderboard, go to <b>📝 Score Updates</b> in the left sidebar and confirm the latest scores.</p>
+            <div style="background:{bg};border:1px solid {border};border-radius:12px;padding:14px 18px;margin-bottom:10px">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap">
+                    <span style="font-size:22px">{pos}</span>
+                    <span style="font-size:18px;font-weight:600;{name_style}">{r['friend']}</span>
+                    <span style="font-size:18px;font-weight:700;color:{score_color}">{r['par_label']}</span>
+                    {elim_badge}
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px">{picks_html}</div>
             </div>
             """, unsafe_allow_html=True)
         else:
