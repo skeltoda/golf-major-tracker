@@ -220,6 +220,7 @@ field       = db_get("field") or []
 picks       = db_get("picks") or {}
 scores      = db_get("scores") or {}
 last_updated = db_get("last_updated") or {}
+cut = db_get("cut") or {}
 
 st.sidebar.title("⛳ Golf Major Tracker")
 if tournament.get("tournament"):
@@ -266,43 +267,67 @@ if page == "📊 Leaderboard":
         results = []
         for friend in tournament.get("friends", []):
             fp = picks.get(friend, [])
-            pick_scores = [(n, int(scores.get(n, 0))) for n in fp]
-            pick_scores.sort(key=lambda x: x[1])
-            contributing = [pick_scores[0][0], pick_scores[1][0]] if len(pick_scores) >= 2 else []
-            combined_par = sum(s for _, s in pick_scores[:2]) if len(pick_scores) >= 2 else 0
-            par_label = f"{combined_par:+d}" if combined_par != 0 else "E"
+            pick_scores = [(n, int(scores.get(n, 0)), cut.get(n, False)) for n in fp]
+            active = [(n, s) for n, s, mc in pick_scores if not mc]
+            active.sort(key=lambda x: x[1])
+            eliminated = len(active) < 2
+            if not eliminated:
+                contributing = [active[0][0], active[1][0]]
+                combined_par = active[0][1] + active[1][1]
+                par_label = f"{combined_par:+d}" if combined_par != 0 else "E"
+            else:
+                contributing = []
+                combined_par = 9999
+                par_label = "N/A"
             results.append({
                 "friend": friend,
                 "par_label": par_label,
                 "combined_par": combined_par,
                 "pick_scores": pick_scores,
                 "contributing": contributing,
+                "eliminated": eliminated,
+                "active_count": len(active),
             })
 
-        results.sort(key=lambda x: x["combined_par"])
+        results.sort(key=lambda x: (1 if x["eliminated"] else 0, x["combined_par"]))
 
-        for i, r in enumerate(results):
-            pos = medals[i] if i < 3 else f"{i + 1}."
-            bg = "#F0FDF4" if i == 0 else "#FAFAFA"
+        active_pos = 0
+        for r in results:
+            if r["eliminated"]:
+                pos = "💀"
+                bg = "#FFF1F1"
+                border = "#FCA5A5"
+            else:
+                pos = medals[active_pos] if active_pos < 3 else f"{active_pos + 1}."
+                bg = "#F0FDF4" if active_pos == 0 else "#FAFAFA"
+                border = "#E2E8F0"
+                active_pos += 1
+
+            name_style = "text-decoration:line-through;color:#94A3B8;" if r["eliminated"] else "color:#0F172A;"
+            elim_badge = '<span style="background:#FEE2E2;color:#991B1B;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px">ELIMINATED — fewer than 2 active players</span>' if r["eliminated"] else ""
+            score_color = "#94A3B8" if r["eliminated"] else ("#16A34A" if r["combined_par"] < 0 else "#DC2626" if r["combined_par"] > 0 else "#0F172A")
+
+            picks_html = ""
+            for n, s, mc in r["pick_scores"]:
+                if mc:
+                    picks_html += f'<span style="background:#FEE2E2;color:#94A3B8;padding:4px 10px;border-radius:20px;font-size:12px;text-decoration:line-through">✂️ {n} (CUT)</span>'
+                elif n in r["contributing"]:
+                    picks_html += f'<span style="background:#D1FAE5;color:#065F46;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600">⭐ {n} ({fmt_par(s)})</span>'
+                else:
+                    picks_html += f'<span style="background:#F1F5F9;color:#94A3B8;padding:4px 10px;border-radius:20px;font-size:12px">☆ {n} ({fmt_par(s)})</span>'
+
             st.markdown(f"""
-            <div style="background:{bg};border:1px solid #E2E8F0;border-radius:12px;padding:14px 18px;margin-bottom:10px">
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+            <div style="background:{bg};border:1px solid {border};border-radius:12px;padding:14px 18px;margin-bottom:10px">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap">
                     <span style="font-size:22px">{pos}</span>
-                    <span style="font-size:18px;font-weight:600;color:#0F172A">{r['friend']}</span>
-                    <span style="font-size:18px;font-weight:700;color:{'#16A34A' if r['combined_par'] < 0 else '#DC2626' if r['combined_par'] > 0 else '#0F172A'}">{r['par_label']}</span>
+                    <span style="font-size:18px;font-weight:600;{name_style}">{r['friend']}</span>
+                    <span style="font-size:18px;font-weight:700;color:{score_color}">{r['par_label']}</span>
+                    {elim_badge}
                 </div>
-                <div style="display:flex;flex-wrap:wrap;gap:6px">
-                    {''.join([
-                        f'<span style="background:#D1FAE5;color:#065F46;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600">⭐ {name} ({fmt_par(s)})</span>'
-                        if name in r['contributing'] else
-                        f'<span style="background:#F1F5F9;color:#94A3B8;padding:4px 10px;border-radius:20px;font-size:12px">☆ {name} ({fmt_par(s)})</span>'
-                        for name, s in r['pick_scores']
-                    ])}
-                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px">{picks_html}</div>
             </div>
             """, unsafe_allow_html=True)
         st.divider()
-
 # ── SCORE UPDATES ─────────────────────────────────────────────────────────────
 elif page == "📝 Score Updates":
     show_header()
@@ -314,6 +339,7 @@ elif page == "📝 Score Updates":
     if not picks:
         st.warning("No picks entered yet.")
     else:
+        cut = db_get("cut") or {}
         picked = sorted(set(n for p in picks.values() for n in p))
         st.subheader(f"{len(picked)} players in the competition")
 
@@ -330,6 +356,7 @@ elif page == "📝 Score Updates":
                         max_value=30,
                         key=f"su_{name}"
                     )
+                    cut[name] = st.checkbox("❌ Missed cut", value=cut.get(name, False), key=f"cut_{name}")
 
             st.write("")
             c1, c2 = st.columns(2)
@@ -340,6 +367,7 @@ elif page == "📝 Score Updates":
 
             if save_btn:
                 db_set("scores", new_s)
+                db_set("cut", cut)
                 db_set("last_updated", {"time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")})
                 st.success("✅ Scores saved! Leaderboard updated.")
                 st.rerun()
