@@ -5,7 +5,6 @@ from datetime import datetime
 
 st.set_page_config(page_title="Golf Major Tracker", page_icon="⛳", layout="wide")
 
-# ── SUPABASE HELPERS ──────────────────────────────────────────────────────────
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 HEADERS = {
@@ -208,19 +207,14 @@ def fmt_par(score):
     return f"{score:+d}"
 
 def show_header():
-    st.markdown(f"""
-    <div style="width:100%;margin-bottom:24px;border-radius:12px;overflow:hidden;max-height:200px">
-        <img src="{HEADER_IMG}" style="width:100%;object-fit:cover;object-position:center 60%">
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div style="width:100%;margin-bottom:24px;border-radius:12px;overflow:hidden;max-height:200px"><img src="{HEADER_IMG}" style="width:100%;object-fit:cover;object-position:center 60%"></div>', unsafe_allow_html=True)
 
-# ── LOAD DATA FROM SUPABASE ───────────────────────────────────────────────────
-tournament  = db_get("tournament") or {}
-field       = db_get("field") or []
-picks       = db_get("picks") or {}
-scores      = db_get("scores") or {}
+tournament   = db_get("tournament") or {}
+field        = db_get("field") or []
+picks        = db_get("picks") or {}
+scores       = db_get("scores") or {}
 last_updated = db_get("last_updated") or {}
-cut = db_get("cut") or {}
+cut          = db_get("cut") or {}
 
 st.sidebar.title("⛳ Golf Major Tracker")
 if tournament.get("tournament"):
@@ -229,7 +223,6 @@ if tournament.get("tournament"):
 
 page = st.sidebar.radio("Navigate", ["📊 Leaderboard", "📝 Score Updates", "🏆 Setup", "⛳ Field & Points", "👥 Friend Picks"])
 
-# ── LEADERBOARD ───────────────────────────────────────────────────────────────
 if page == "📊 Leaderboard":
     show_header()
     st.title("📊 Leaderboard")
@@ -247,26 +240,11 @@ if page == "📊 Leaderboard":
             else:
                 hours = mins // 60
                 time_str = f"{hours}h {mins % 60}m ago"
-            st.markdown(f"""
-            <div style="background:{bg};border:1px solid {border};border-radius:12px;padding:14px 18px;margin-bottom:10px">
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap">
-                    <span style="font-size:22px">{pos}</span>
-                    <span style="font-size:18px;font-weight:600;{name_style}">{r['friend']}</span>
-                    <span style="font-size:18px;font-weight:700;color:{score_color}">{r['par_label']}</span>
-                    {elim_badge}
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:6px">{picks_html}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f'<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:12px 16px;margin-bottom:16px"><p style="margin:0;font-size:14px;font-weight:700;color:#92400E">⏱️ Scores last updated: {time_str}</p><p style="margin:4px 0 0;font-size:13px;color:#92400E">To refresh, go to <b>📝 Score Updates</b> in the sidebar.</p></div>', unsafe_allow_html=True)
         else:
-            st.markdown("""
-            <div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:12px 16px;margin-bottom:16px">
-                <p style="margin:0;font-size:14px;font-weight:700;color:#92400E">⏱️ Scores not yet updated</p>
-                <p style="margin:4px 0 0;font-size:13px;color:#92400E">Go to <b>📝 Score Updates</b> in the left sidebar to enter the latest scores.</p>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown('<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:12px 16px;margin-bottom:16px"><p style="margin:0;font-size:14px;font-weight:700;color:#92400E">⏱️ Scores not yet updated</p><p style="margin:4px 0 0;font-size:13px;color:#92400E">Go to <b>📝 Score Updates</b> in the sidebar to enter scores.</p></div>', unsafe_allow_html=True)
 
-        st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = counting · ☆ = not counting · all scores relative to par")
+        st.caption(f"Royal Birkdale · Par {PAR} · ⭐ = counting · ☆ = not counting · ✂️ = missed cut")
 
         medals = ["🥇", "🥈", "🥉"]
         results = []
@@ -291,91 +269,90 @@ if page == "📊 Leaderboard":
                 "pick_scores": pick_scores,
                 "contributing": contributing,
                 "eliminated": eliminated,
-                "active_count": len(active),
             })
 
         results.sort(key=lambda x: (1 if x["eliminated"] else 0, x["combined_par"]))
 
         active_pos = 0
         for r in results:
-            if r["eliminated"]:
+            elim = r["eliminated"]
+            if elim:
                 pos = "💀"
-                bg = "#FFF1F1"
-                border = "#FCA5A5"
+                bg_col = "#FFF1F1"
+                border_col = "#FCA5A5"
+                name_col = "#94A3B8"
+                name_dec = "line-through"
+                score_col = "#94A3B8"
+                badge = '<span style="background:#FEE2E2;color:#991B1B;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px">ELIMINATED</span>'
             else:
                 pos = medals[active_pos] if active_pos < 3 else f"{active_pos + 1}."
-                bg = "#F0FDF4" if active_pos == 0 else "#FAFAFA"
-                border = "#E2E8F0"
+                bg_col = "#F0FDF4" if active_pos == 0 else "#FAFAFA"
+                border_col = "#E2E8F0"
+                name_col = "#0F172A"
+                name_dec = "none"
+                score_col = "#16A34A" if r["combined_par"] < 0 else "#DC2626" if r["combined_par"] > 0 else "#0F172A"
+                badge = ""
                 active_pos += 1
-
-            name_style = "text-decoration:line-through;color:#94A3B8;" if r["eliminated"] else "color:#0F172A;"
-            elim_badge = '<span style="background:#FEE2E2;color:#991B1B;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px">ELIMINATED — fewer than 2 active players</span>' if r["eliminated"] else ""
-            score_color = "#94A3B8" if r["eliminated"] else ("#16A34A" if r["combined_par"] < 0 else "#DC2626" if r["combined_par"] > 0 else "#0F172A")
 
             picks_html = ""
             for n, s, mc in r["pick_scores"]:
                 if mc:
-                    picks_html += f'<span style="background:#FEE2E2;color:#94A3B8;padding:4px 10px;border-radius:20px;font-size:12px;text-decoration:line-through">✂️ {n} (CUT)</span>'
+                    picks_html += f'<span style="background:#FEE2E2;color:#94A3B8;padding:4px 10px;border-radius:20px;font-size:12px;text-decoration:line-through">✂️ {n} (CUT)</span> '
                 elif n in r["contributing"]:
-                    picks_html += f'<span style="background:#D1FAE5;color:#065F46;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600">⭐ {n} ({fmt_par(s)})</span>'
+                    picks_html += f'<span style="background:#D1FAE5;color:#065F46;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600">⭐ {n} ({fmt_par(s)})</span> '
                 else:
-                    picks_html += f'<span style="background:#F1F5F9;color:#94A3B8;padding:4px 10px;border-radius:20px;font-size:12px">☆ {n} ({fmt_par(s)})</span>'
+                    picks_html += f'<span style="background:#F1F5F9;color:#94A3B8;padding:4px 10px;border-radius:20px;font-size:12px">☆ {n} ({fmt_par(s)})</span> '
 
-            st.markdown(f"""<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:12px 16px;margin-bottom:16px">
-                <p style="margin:0;font-size:14px;font-weight:700;color:#92400E">⏱️ Scores last updated: {time_str}</p>
-                <p style="margin:4px 0 0;font-size:13px;color:#92400E">To refresh the leaderboard, go to <b>📝 Score Updates</b> in the left sidebar and confirm the latest scores.</p>
-            </div>""", unsafe_allow_html=True)
+            html = '<div style="background:' + bg_col + ';border:1px solid ' + border_col + ';border-radius:12px;padding:14px 18px;margin-bottom:10px">'
+            html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap">'
+            html += '<span style="font-size:22px">' + pos + '</span>'
+            html += '<span style="font-size:18px;font-weight:600;color:' + name_col + ';text-decoration:' + name_dec + '">' + r["friend"] + '</span>'
+            html += '<span style="font-size:18px;font-weight:700;color:' + score_col + '">' + r["par_label"] + '</span>'
+            html += badge
+            html += '</div>'
+            html += '<div style="display:flex;flex-wrap:wrap;gap:6px">' + picks_html + '</div>'
+            html += '</div>'
+            st.markdown(html, unsafe_allow_html=True)
+
         st.divider()
-# ── SCORE UPDATES ─────────────────────────────────────────────────────────────
+
 elif page == "📝 Score Updates":
     show_header()
     st.title("📝 Score Updates")
     st.caption("Update scores here — leaderboard updates immediately")
     st.markdown("📺 **Live scores:** [theopen.com/leaderboard](https://www.theopen.com/leaderboard)")
     st.divider()
-
     if not picks:
         st.warning("No picks entered yet.")
     else:
-        cut = db_get("cut") or {}
         picked = sorted(set(n for p in picks.values() for n in p))
         st.subheader(f"{len(picked)} players in the competition")
-
         with st.form("score_update_form"):
             new_s = {}
+            new_cut = {}
             cols = st.columns(3)
             for i, name in enumerate(picked):
                 with cols[i % 3]:
                     current = int(scores.get(name, 0))
-                    new_s[name] = st.number_input(
-                        f"{name}  ({fmt_par(current)})",
-                        value=current,
-                        min_value=-30,
-                        max_value=30,
-                        key=f"su_{name}"
-                    )
-                    cut[name] = st.checkbox("❌ Missed cut", value=cut.get(name, False), key=f"cut_{name}")
-
+                    new_s[name] = st.number_input(f"{name}  ({fmt_par(current)})", value=current, min_value=-30, max_value=30, key=f"su_{name}")
+                    new_cut[name] = st.checkbox("✂️ Missed cut", value=cut.get(name, False), key=f"cut_{name}")
             st.write("")
             c1, c2 = st.columns(2)
             with c1:
                 save_btn = st.form_submit_button("💾 Save & Update Leaderboard", type="primary", use_container_width=True)
             with c2:
                 confirm_btn = st.form_submit_button("✅ No Changes", use_container_width=True)
-
             if save_btn:
                 db_set("scores", new_s)
-                db_set("cut", cut)
+                db_set("cut", new_cut)
                 db_set("last_updated", {"time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")})
                 st.success("✅ Scores saved! Leaderboard updated.")
                 st.rerun()
-
             if confirm_btn:
                 db_set("last_updated", {"time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")})
                 st.success("✅ Confirmed — no changes.")
                 st.rerun()
 
-# ── SETUP ─────────────────────────────────────────────────────────────────────
 elif page == "🏆 Setup":
     show_header()
     st.title("🏆 Tournament Setup")
@@ -392,7 +369,6 @@ elif page == "🏆 Setup":
             st.success(f"Saved! {len(friends)} players.")
             st.rerun()
 
-# ── FIELD & POINTS ─────────────────────────────────────────────────────────────
 elif page == "⛳ Field & Points":
     show_header()
     st.title("⛳ Field & Points")
@@ -437,7 +413,6 @@ elif page == "⛳ Field & Points":
             db_set("field", [])
             st.rerun()
 
-# ── FRIEND PICKS ──────────────────────────────────────────────────────────────
 elif page == "👥 Friend Picks":
     show_header()
     st.title("👥 Friend Picks")
@@ -471,8 +446,7 @@ elif page == "👥 Friend Picks":
             checked = g["name"] in current
             new_total = used - (g["points"] if checked else 0) + (0 if checked else g["points"])
             disabled = (new_total > BUDGET) and not checked
-            if st.checkbox(f"{g['name']}  —  {g['points']} pts", value=checked,
-                           disabled=disabled, key=f"{friend}_{g['name']}"):
+            if st.checkbox(f"{g['name']}  —  {g['points']} pts", value=checked, disabled=disabled, key=f"{friend}_{g['name']}"):
                 new_picks.append(g["name"])
         if st.button("💾 Save picks", type="primary"):
             total = sum(p["points"] for p in field if p["name"] in new_picks)
